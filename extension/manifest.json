@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Cover Letter Generator",
+  "version": "1.0.0",
+  "description": "Generate personalized cover letters using your profile and job descriptions",
+  
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "downloads"
+  ],
+  
+  "host_permissions": [
+    "http://localhost:8787/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "action": {
+    "default_popup": "",
+    "default_title": "Open Cover Letter Generator"
+  }
+}

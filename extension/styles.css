@@ -1,0 +1,654 @@
+/* Main App Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.5;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+.app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.app-header {
+    background: #2563eb;
+    color: white;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.app-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.tab-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tab-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.tab-btn.active {
+    background: white;
+    color: #2563eb;
+    border-color: white;
+}
+
+/* Main Content */
+.app-main {
+    padding: 2rem;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Sections */
+.section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.section h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1f2937;
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #374151;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.btn-secondary {
+    background: white;
+    color: #374151;
+    border-color: #d1d5db;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #f9fafb;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #b91c1c;
+}
+
+/* Skills */
+.skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.skill-tag {
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.skill-remove {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.skill-remove:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Experience and Project Cards */
+.experience-card,
+.project-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.card-title {
+    flex: 1;
+}
+
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.card-actions button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.bullet-list {
+    margin-top: 0.5rem;
+}
+
+.bullet-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.bullet-item input {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 0.8125rem;
+}
+
+.bullet-remove {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+/* Generate Layout */
+.generate-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    height: calc(100vh - 200px);
+}
+
+.generation-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.generation-buttons .btn {
+    flex: 1;
+    min-height: 45px;
+    font-weight: 600;
+}
+
+.preview-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.resume-preview {
+    flex: 1;
+    overflow: auto;
+    padding: 1rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+}
+
+.resume-content {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    min-height: 600px;
+    font-size: 11pt;
+    line-height: 1.4;
+    font-family: 'Times New Roman', serif;
+}
+
+.job-input-section,
+.preview-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.job-input-section textarea {
+    flex: 1;
+    resize: vertical;
+    min-height: 300px;
+}
+
+.preview-section {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.preview-header h2 {
+    margin: 0;
+}
+
+.letter-preview {
+    flex: 1;
+    overflow: auto;
+    padding: 1rem;
+}
+
+.letter-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    min-height: 400px;
+    font-size: 11pt;
+    line-height: 1.4;
+}
+
+/* Runs */
+.runs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.run-item {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.run-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.run-meta {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.run-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.run-actions button {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+.run-job-preview {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+    max-height: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Status Messages */
+.status-message {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.status-success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.status-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.status-loading {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #dbeafe;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    color: white;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 0.5rem;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-body {
+    padding: 1rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+.placeholder-text {
+    color: #6b7280;
+    font-style: italic;
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Print Styles for Clean PDF Generation */
+@media print {
+    /* Hide everything first */
+    * {
+        visibility: hidden !important;
+        background: transparent !important;
+        color: black !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    /* Only show the letter content */
+    .letter-content,
+    .letter-content * {
+        visibility: visible !important;
+    }
+
+    /* Hide Chrome headers and footers completely */
+    @page {
+        size: letter;
+        margin: 0 !important;
+    }
+
+    /* Create our own margins within the content */
+    html, body {
+        width: 8.5in !important;
+        height: 11in !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: hidden !important;
+    }
+
+    /* Position letter content to fill the page with proper margins */
+    .letter-content {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 8.5in !important;
+        height: 11in !important;
+        padding: 0.75in 1in !important;
+        margin: 0 !important;
+        font-family: 'Times New Roman', serif !important;
+        font-size: 11pt !important;
+        line-height: 1.4 !important;
+        color: black !important;
+        background: white !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+    }
+
+    /* Letter formatting */
+    .letter-content p {
+        margin-bottom: 1em !important;
+        orphans: 2 !important;
+        widows: 2 !important;
+        page-break-inside: avoid !important;
+    }
+
+    .letter-content .letter-header {
+        margin-bottom: 1.5em !important;
+    }
+
+    .letter-content .letter-header p {
+        margin-bottom: 0.25em !important;
+    }
+
+    .letter-content .letter-date {
+        margin-bottom: 1.5em !important;
+    }
+
+    .letter-content .letter-body p {
+        text-align: justify !important;
+        margin-bottom: 1em !important;
+    }
+
+    .letter-content .letter-closing {
+        margin-top: 1.5em !important;
+    }
+
+    .letter-content .letter-closing p {
+        margin-bottom: 0.5em !important;
+    }
+
+    /* Ensure no page breaks within the letter */
+    .letter-content {
+        page-break-inside: avoid !important;
+    }
+}
+
+/* Alternative print mode class for better control */
+body.print-mode * {
+    visibility: hidden;
+}
+
+body.print-mode .letter-content,
+body.print-mode .letter-content * {
+    visibility: visible;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .app-main {
+        padding: 1rem;
+    }
+
+    .generate-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .tab-nav {
+        flex-wrap: wrap;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+
+    .actions .btn {
+        justify-content: center;
+    }
+}

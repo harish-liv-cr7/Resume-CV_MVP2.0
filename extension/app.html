@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cover Letter Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Cover Letter Generator</h1>
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="profile">Profile</button>
+                <button class="tab-btn" data-tab="generate">Generate</button>
+            </nav>
+        </header>
+
+        <main class="app-main">
+            <!-- Profile Tab -->
+            <div id="profile-tab" class="tab-content active">
+                <div class="section">
+                    <h2>Personal Information</h2>
+                    <div class="form-group">
+                        <label for="profile-name">Full Name</label>
+                        <input type="text" id="profile-name" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-contact">Contact Information</label>
+                        <textarea id="profile-contact" rows="4" placeholder="Email: john@example.com&#10;Phone: (555) 123-4567&#10;LinkedIn: linkedin.com/in/johndoe&#10;GitHub: github.com/johndoe&#10;Portfolio: johndoe.dev"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-location">Location</label>
+                        <input type="text" id="profile-location" placeholder="City, State (e.g., Austin, TX)">
+                    </div>
+                    <div class="form-group">
+                        <label>Education</label>
+                        <input type="text" id="profile-university" placeholder="University Name (e.g., Stanford University)">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+                            <input type="text" id="profile-degree-type" placeholder="Degree Type (e.g., Bachelor of Science)">
+                            <input type="text" id="profile-major" placeholder="Major (e.g., Computer Science)">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+                            <input type="text" id="profile-education-start" placeholder="Start Year (e.g., 2016)">
+                            <input type="text" id="profile-education-end" placeholder="End Year (e.g., 2020)">
+                            <input type="text" id="profile-education-gpa" placeholder="GPA (e.g., 3.8/4.0)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Skills</h2>
+                    <div class="form-group">
+                        <label for="skills-input">Add Skills (press Enter to add)</label>
+                        <input type="text" id="skills-input" placeholder="JavaScript, Python, React...">
+                        <div id="skills-list" class="skills-container"></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Experience</h2>
+                    <button id="add-experience" class="btn btn-secondary">Add Experience</button>
+                    <div id="experiences-container"></div>
+                </div>
+
+                <div class="section">
+                    <h2>Projects</h2>
+                    <button id="add-project" class="btn btn-secondary">Add Project</button>
+                    <div id="projects-container"></div>
+                </div>
+
+                <div class="section">
+                    <h2>Additional Experience</h2>
+                    <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem;">Research experience, achievements, certifications, publications, etc.</p>
+                    <button id="add-extra" class="btn btn-secondary">Add Item</button>
+                    <div id="extras-container"></div>
+                </div>
+
+                <div class="section actions">
+                    <button id="save-profile" class="btn btn-primary">Save Profile</button>
+                    <button id="import-profile" class="btn btn-secondary">Import JSON</button>
+                    <button id="export-profile" class="btn btn-secondary">Export JSON</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                </div>
+            </div>
+
+            <!-- Generate Tab -->
+            <div id="generate-tab" class="tab-content">
+                <div class="generate-layout">
+                    <div class="job-input-section">
+                        <h2>Job Description</h2>
+                        <textarea id="job-text" rows="15" placeholder="Paste the job description here..."></textarea>
+                        <div class="generation-buttons">
+                            <button id="generate-btn" class="btn btn-primary">Generate Cover Letter</button>
+                            <button id="generate-resume-btn" class="btn btn-primary">Generate Resume</button>
+                        </div>
+                        <div id="generation-status" class="status-message"></div>
+                    </div>
+                    
+                    <div class="preview-section">
+                        <div class="preview-header">
+                            <h2 id="preview-title">Preview</h2>
+                            <div class="preview-controls">
+                                <button id="download-pdf" class="btn btn-secondary" disabled>Download Cover Letter PDF</button>
+                                <button id="download-resume-pdf" class="btn btn-secondary hidden" disabled>Download Resume PDF</button>
+                            </div>
+                        </div>
+                        <div id="cover-letter-preview" class="letter-preview">
+                            <div class="letter-content">
+                                <p class="placeholder-text">Your generated cover letter will appear here...</p>
+                            </div>
+                        </div>
+                        <div id="resume-preview" class="resume-preview hidden">
+                            <div class="resume-content">
+                                <p class="placeholder-text">Your generated resume will appear here...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden">
+            <div class="loading-spinner"></div>
+            <p>Generating your cover letter...</p>
+        </div>
+
+        <!-- Error Modal -->
+        <div id="error-modal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Error</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="error-message">An error occurred.</p>
+                    <div class="modal-actions">
+                        <button id="retry-btn" class="btn btn-primary">Retry</button>
+                        <button id="save-logs-btn" class="btn btn-secondary">Save Logs</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="jspdf.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
