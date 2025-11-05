@@ -13,10 +13,18 @@ const openai = new OpenAI({
 
 // Middleware
 app.use(cors({
-  origin: ['chrome-extension://*', 'http://localhost:*'],
-  methods: ['POST'],
-  allowedHeaders: ['Content-Type']
+  origin: (origin, cb) => {
+    // Allow extension origins and localhost in dev
+    if (!origin) return cb(null, true);
+    if (origin.startsWith('chrome-extension://')) return cb(null, true);
+    if (/^http:\/\/localhost(:\d+)?$/i.test(origin)) return cb(null, true);
+    return cb(null, false);
+  },
+  methods: ['POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+  credentials: false
 }));
+
 app.use(express.json({ limit: '10mb' }));
 
 // Request timeout middleware
@@ -37,6 +45,45 @@ app.use(timeout(120000)); // 2 minute timeout for comprehensive resume generatio
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+function truncateWords(s, maxWords = 20) {
+  if (!s) return s;
+  const parts = s.split(/\s+/);
+  return parts.length <= maxWords ? s : parts.slice(0, maxWords).join(' ') + '…';
+}
+function capBullets(arr, maxCount, maxWords) {
+  if (!Array.isArray(arr)) return arr;
+  return arr.slice(0, maxCount).map(b => truncateWords(b, maxWords));
+}
+function approxCharCount(obj) {
+  try { return JSON.stringify(obj).length; } catch { return 0; }
+}
+function trimResumeForOnePage(resume) {
+  // Cap bullets per experience/project and bullet length
+  if (Array.isArray(resume.experience)) {
+    resume.experience = resume.experience.map(r => ({
+      ...r,
+      bullets: capBullets(r.bullets, 4, 22) // 3–4 bullets, ~22 words
+    })).slice(0, 4); // cap number of roles (optional)
+  }
+  if (Array.isArray(resume.projects)) {
+    resume.projects = resume.projects.map(p => ({
+      ...p,
+      bullets: capBullets(p.bullets, 3, 20) // 2–3 bullets, ~20 words
+    })).slice(0, 3);
+  }
+  if (Array.isArray(resume.skills)) resume.skills = resume.skills.slice(0, 4); // 3–4 lines
+  // Light global size guard (roughly keeps JSON small ~ one page when rendered)
+  let size = approxCharCount(resume);
+  const limit = 8000; // tune as needed for your renderer
+  if (size > limit && Array.isArray(resume.experience)) {
+    resume.experience = resume.experience.slice(0, 3);
+    size = approxCharCount(resume);
+  }
+  return resume;
+}
+
+
 
 // Resume generation endpoint
 app.post('/generateResume', async (req, res) => {
@@ -72,161 +119,77 @@ app.post('/generateResume', async (req, res) => {
     const mustIncludeExperiences = profile.experiences.filter(exp => exp.mustInclude);
     const mustIncludeProjects = profile.projects.filter(proj => proj.mustInclude);
     
-    const systemPrompt = `You are an elite resume strategist who creates DENSE, hyper-personalized, ATS-optimized resumes that completely fill one page and get interviews. You must generate comprehensive content that uses 90%+ of the page space. Every section must be substantial and detailed. You NEVER leave whitespace or short sections.`;
-    
-    const userPrompt = `Create a COMPREHENSIVE, DENSE, hyper-personalized resume for the ${roleName} position at ${companyName} that FILLS THE ENTIRE PAGE.
+const systemPrompt = `You are a resume writer who creates truthful, concise, ATS-friendly
+one-page resumes. Do NOT fabricate experiences, programs, or certifications.
+Only use or lightly rephrase what is provided in the profile or job text.
+Prefer measurable impact, clear verbs, and job-relevant keywords. Keep the
+final result to a single U.S. Letter page when rendered with a typical resume
+template (≈ 600–750 words total).`;
 
-CRITICAL PAGE DENSITY REQUIREMENTS - FILL THE ENTIRE PAGE:
-• The resume MUST use 95%+ of the page space with substantial, professional content
-• NEVER leave sections empty - if a section exists, it must have meaningful content
-• Generate detailed, comprehensive bullets (20-30 words each minimum)
-• Expand skills extensively to include ALL relevant technologies (20+ skills minimum)
-• Always generate substantial education content with coursework and achievements
-• Always generate programs/certifications content from any available data
-• Make every section dense and professional like the sample
+const userPrompt = `Create a targeted, one-page resume for the ${roleName} role at ${companyName}.
+Strict rules:
+• Do NOT invent or hallucinate content (programs, certs, jobs). If data is missing, omit the section.
+• Keep to a single page worth of content (≈ 600–750 words max).
+• Section order for new grads: Header → Skills → Education → Experience → Projects → (optional) Programs/Certifications.
+• Bullet counts (upper bounds): Experience 3–4 bullets per role; Projects 2–3 bullets per project.
+• Bullet length: ~12–22 words; be specific and outcome-oriented.
+• Skills: 3–4 category lines max (Languages, Frameworks/Libs, Data/Databases, Cloud/DevOps/Tools).
+• Education: keep accurate (degree, school, location, dates, GPA if provided); include 3–6 relevant courses if available.
+• Programs/Certifications: include ONLY if provided in profile; otherwise OMIT this section entirely.
 
-MANDATORY CONTENT EXPANSION RULES:
-1. SKILLS: Generate 20+ skills minimum, grouped into 4-5 category lines. Include ALL relevant technologies from the job posting plus related ones. Be comprehensive and detailed.
+Prioritize: “mustInclude” experiences/projects → role relevance → recency → quantified impact.
 
-2. EXPERIENCE: Each role must have 4-6 detailed bullets (20-30 words each). Transform basic tasks into comprehensive achievements with context, action, technical details, and quantified results.
-
-3. PROJECTS: Each project needs 3-4 substantial bullets showing technical depth, implementation details, technologies used, and measurable impact.
-
-4. EDUCATION: MANDATORY - ALWAYS populate this section with comprehensive content. Use the provided education data and ALWAYS add relevant coursework (6-8 specific courses like Data Structures, Algorithms, Software Engineering, etc.), academic achievements, and honors. NEVER leave this section empty.
-
-5. PROGRAMS/CERTIFICATIONS: MANDATORY - ALWAYS generate substantial content for this section. Use any programs, research, or certifications from the profile. If no data provided, generate realistic academic programs, tech workshops, online certifications, or relevant training that a computer science student would have. NEVER leave this section empty.
-
-6. CONTENT ENHANCEMENT: Enhance and expand all provided information to create comprehensive, detailed descriptions that fill the page completely.
-
-SECTION STRUCTURE (in this order for students/new grads):
-• Header: Name (large), contact line, professional tagline
-• Skills & Interests: Comprehensive, categorized (Programming Languages, Frameworks, Databases, Cloud/DevOps, etc.)
-• Education & Honors: Complete academic information with coursework and achievements
-• Experience: Detailed work history with comprehensive achievement bullets
-• Projects: Technical projects with implementation details and impact
-• Programs/Certifications: Any additional qualifications, research, or programs
-
-CONTENT ENHANCEMENT INSTRUCTIONS:
-• Take the basic profile information and EXPAND it significantly
-• Add realistic technical details that align with the job requirements
-• Generate comprehensive bullets that show depth and expertise
-• Include relevant coursework and academic achievements
-• Enhance project descriptions with technical implementation details
-• Add context and background to make achievements more substantial
-• Use job posting keywords naturally throughout all sections
-
-JOB POSTING ANALYSIS:
+JOB POSTING:
 ${jobText}
 
-CANDIDATE PROFILE TO ENHANCE:
+CANDIDATE PROFILE:
 Name: ${profile.name}
 Location: ${profile.location || 'Not specified'}
 Education: ${profile.education?.degreeType || ''} ${profile.education?.major || ''}, ${profile.education?.university || 'Not specified'}${profile.education?.start && profile.education?.end ? ` (${profile.education.start} - ${profile.education.end})` : ''}${profile.education?.gpa ? `, GPA: ${profile.education.gpa}` : ''}
 
 Skills: ${profile.skills ? profile.skills.join(', ') : 'None listed'}
 
-Work Experience: ${profile.experiences ? profile.experiences.map(exp => {
-  let expStr = `${exp.title} at ${exp.company} (${exp.start} - ${exp.end}, ${exp.location})`;
-  if (exp.description) expStr += `\nRole: ${exp.description}`;
-  if (exp.bullets && exp.bullets.length > 0) expStr += `\nKey Achievements: ${exp.bullets.join('; ')}`;
-  return expStr;
+Must-Include Experiences: ${mustIncludeExperiences.map(e => `${e.title} at ${e.company}`).join('; ') || 'None'}
+Experiences:
+${profile.experiences ? profile.experiences.map(exp => {
+  let s = `${exp.title} at ${exp.company} (${exp.start} - ${exp.end}, ${exp.location})`;
+  if (exp.description) s += `\nRole: ${exp.description}`;
+  if (exp.bullets?.length) s += `\nKey Achievements: ${exp.bullets.join('; ')}`;
+  return s;
 }).join('\n\n') : 'None listed'}
 
-Projects: ${profile.projects ? profile.projects.map(proj => {
-  let projStr = proj.name;
-  if (proj.description) projStr += `\nDescription: ${proj.description}`;
-  if (proj.bullets && proj.bullets.length > 0) projStr += `\nKey Details: ${proj.bullets.join('; ')}`;
-  return projStr;
+Must-Include Projects: ${mustIncludeProjects.map(p => p.name).join('; ') || 'None'}
+Projects:
+${profile.projects ? profile.projects.map(proj => {
+  let s = proj.name;
+  if (proj.description) s += `\nDescription: ${proj.description}`;
+  if (proj.bullets?.length) s += `\nKey Details: ${proj.bullets.join('; ')}`;
+  return s;
 }).join('\n\n') : 'None listed'}
 
-Additional Experience: ${profile.extras ? profile.extras.map(extra => {
-  let extraStr = `${extra.title} at ${extra.organization}`;
-  if (extra.type) extraStr += ` (Type: ${extra.type})`;
-  if (extra.start && extra.end) extraStr += ` (${extra.start} - ${extra.end})`;
-  if (extra.description) extraStr += `\nDescription: ${extra.description}`;
-  return extraStr;
-}).join('\n\n') : 'None listed'}
+Programs/Certifications (if any):
+${Array.isArray(profile.programs) && profile.programs.length ? profile.programs.join('\n') : 'None'}
 
-CRITICAL PAGE DENSITY REQUIREMENTS:
-• Generate COMPREHENSIVE content that fills 90%+ of the page
-• Each experience should have 4-6 detailed bullets (15-25 words each)
-• Each project should have 3-4 substantial technical bullets
-• Skills section should be extensive with 15+ skills grouped by category
-• Education section should include coursework and academic achievements
-• Programs section should be substantial with detailed descriptions
-• NEVER leave sections empty or with minimal content
-
-CRITICAL ONE-PAGE REQUIREMENTS:
-• MUST include all experiences marked as "Must Include": ${mustIncludeExperiences.map(exp => exp.title + ' at ' + exp.company).join(', ') || 'None'}
-• MUST include all projects marked as "Must Include": ${mustIncludeProjects.map(proj => proj.name).join(', ') || 'None'}
-• Apply intelligent selection and trimming to fit exactly one page
-• Prioritize: Must Include items → Role relevance → Recency → Impact
-• Use job posting keywords naturally throughout all sections
-• Make every bullet point demonstrate value for THIS specific role
-
-ADAPTIVE CONTENT RULES:
-• If content is too long: Drop least relevant items first, then reduce bullets per entry
-• If content is too short: Add best-matching projects, then expand bullets with deeper detail
-• Always fill the page completely without going to page 2
-• Professional Summary must sound like candidate was designed for this exact role
-• Skills must be grouped by category and emphasize job requirements
-
-CRITICAL SECTION REQUIREMENTS:
-• EDUCATION section MUST have comprehensive content including coursework and honors
-• PROGRAMS section MUST have substantial content - NEVER empty
-• ALL sections must be filled with meaningful, detailed content
-• If any section would be empty, generate appropriate content for a computer science student
-
-MANDATORY OUTPUT FORMAT - Return JSON with this exact structure that FILLS THE ENTIRE PAGE:
+OUTPUT JSON (omit a section key if you have no content for it):
 {
-  "summary": "Software Engineer | Technical expertise in [key technologies] | [Key strength relevant to role]",
-  "skills": [
-    "Programming Languages: Java, Python, JavaScript, TypeScript, C++, SQL, HTML, CSS",
-    "Frameworks & Libraries: React, Node.js, Express, Flask, Spring Boot, Bootstrap, jQuery",
-    "Databases & Storage: PostgreSQL, MySQL, MongoDB, Redis, Elasticsearch, JSON",
-    "Cloud & DevOps: AWS, Docker, Git, GitHub Actions, Jenkins, Linux, CI/CD",
-    "Development Tools: Visual Studio Code, IntelliJ, Eclipse, Postman, Agile, Scrum"
-  ],
+  "summary": "short headline/tagline (one line)",
+  "skills": ["up to 4 categorized lines"],
+  "education": {
+    "degree": "...",
+    "school": "...",
+    "location": "...",
+    "dates": "...",
+    "gpa": "..."
+  },
   "experience": [
-    {
-      "title": "Job Title",
-      "company": "Company Name", 
-      "dates": "Month Year – Month Year",
-      "location": "City, State",
-      "bullets": [
-        "Comprehensive 15-25 word bullet showing action, context, technical details, and quantified results that demonstrate value",
-        "Another detailed bullet explaining specific technical implementation, challenges overcome, and measurable business impact achieved",
-        "Third bullet highlighting collaboration, leadership, process improvement, or system optimization with concrete outcomes",
-        "Fourth bullet demonstrating problem-solving skills, innovation, or efficiency improvements with specific metrics and context"
-      ]
-    }
+    { "title": "...", "company": "...", "dates": "...", "location": "...", "bullets": ["...","...","..."] }
   ],
   "projects": [
-    {
-      "name": "Project Name",
-      "link": "github.com/username/project",
-      "bullets": [
-        "Built comprehensive project using [specific tech stack] implementing [specific features] resulting in [measurable outcome or performance metric]",
-        "Designed and developed [technical component] utilizing [technologies] to achieve [specific goal] with [quantified result]",
-        "Implemented [specific technical solution] handling [complexity/scale] and optimized for [performance aspect] achieving [metric]"
-      ]
-    }
+    { "name": "...", "link": "optional", "bullets": ["...","..."] }
   ],
-  "education": {
-    "degree": "Bachelor of Science in Computer Science",
-    "school": "Texas State University",
-    "location": "San Marcos, TX", 
-    "dates": "May 2026",
-    "major": "Computer Science",
-    "minor": "Mathematics",
-    "gpa": "3.6/4.0",
-    "honors": "• 4x Dean's List, Texas State Achievement Scholarship Recipient • Relevant Coursework: Data Structures and Algorithms, Assembly Language, Computer Architecture, Object Oriented Programming [Java], Computer Graphics, Cyber Security, Computing Systems Fundamentals, Software Engineering"
-  },
-  "programs": [
-    "Paycom - Technology Summer Engagement Program - Austin, Texas - Jun 2025: Selected participant in Paycom's multi day tech immersion. Completed workshops on secure documentation and compliance strategies during Paycom Tech Engagement Program.",
-    "Worked with a small student team to design and pitch a feature concept to Paycom engineers, gaining direct feedback on Agile teamwork, presentation skills, and real-world software workflows."
-  ]
+  "programs": ["only include if actually provided in profile"]
 }`;
+
 
     // Call OpenAI API
     let completion;
@@ -251,6 +214,15 @@ MANDATORY OUTPUT FORMAT - Return JSON with this exact structure that FILLS THE E
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(responseContent);
+      // Drop Programs if user didn't provide any; never fabricate
+      const userProvidedPrograms = Array.isArray(profile.programs) && profile.programs.length > 0;
+      if (!userProvidedPrograms && 'programs' in parsedResponse) {
+        delete parsedResponse.programs;
+      }
+
+      // Enforce one-page heuristics (caps bullets/counts/length)
+      parsedResponse = trimResumeForOnePage(parsedResponse);
+
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
       return res.status(500).json({ 
@@ -563,6 +535,56 @@ DO NOT include any other text outside the JSON response.`;
     res.status(500).json(errorResponse);
   }
 });
+
+
+// === Resume PDF snapshot endpoint (unified render) ===
+const puppeteer = require("puppeteer");
+
+app.post("/pdf/fromHtml", async (req, res) => {
+  const { html } = req.body;
+  if (!html) return res.status(400).json({ error: "Missing HTML content" });
+
+  try {
+    const browser = await puppeteer.launch({ args: ["--no-sandbox"] });
+    const page = await browser.newPage();
+
+    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.emulateMediaType("screen");
+
+    const pdf = await page.pdf({
+      printBackground: true,
+      preferCSSPageSize: true,
+    });
+
+    await browser.close();
+
+    // --- Server-side diagnostics (helps us confirm what we’re sending)
+    const headAscii = pdf.slice(0, 8).toString("ascii");
+    const headHex = pdf.slice(0, 16).toString("hex").replace(/(..)/g, "$1 ").trim();
+    console.log("[fromHtml] PDF head(ascii) =", JSON.stringify(headAscii)); // should start with "%PDF-"
+    console.log("[fromHtml] PDF head(hex)   =", headHex);
+    console.log("[fromHtml] PDF length      =", pdf.length);
+
+    // --- Ground-truth copy to disk (temporary debug)
+    try { require("fs").writeFileSync("./_debug_server_resume.pdf", pdf); } catch {}
+
+    // --- Send raw bytes without charset (use end(), not send())
+    const headers = {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": 'attachment; filename="Resume.pdf"',
+      "Content-Length": pdf.length
+    };
+    res.writeHead(200, headers);
+    res.end(pdf);
+  } catch (err) {
+    console.error("PDF generation error:", err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Failed to render PDF", details: err.message });
+    }
+  }
+});
+
+
 
 // Start server
 app.listen(PORT, () => {

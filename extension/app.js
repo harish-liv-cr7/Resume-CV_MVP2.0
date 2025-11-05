@@ -43,14 +43,19 @@ class CoverLetterApp {
     // Data Management
     async loadData() {
         try {
-            const result = await chrome.storage.local.get(['profile']);
-            if (result.profile) {
-                this.profile = { ...this.profile, ...result.profile };
+        const result = await chrome.storage.local.get(['profile']);
+        if (result.profile) {
+            // shallow merge first
+            this.profile = { ...this.profile, ...result.profile };
+            // deep-merge education to keep all child fields intact
+            this.profile.education = {
+            ...{ university: '', degreeType: '', major: '', start: '', end: '', gpa: '' },
+            ...(result.profile.education || {})
+            };
             }
-        } catch (error) {
-            console.error('Error loading data:', error);
-        }
+        }  catch (e) { console.error('Error loading data:', e); }
     }
+
 
     async saveData() {
         try {
@@ -148,8 +153,11 @@ class CoverLetterApp {
             this.generateResume();
         });
 
-        document.getElementById('download-resume-pdf')?.addEventListener('click', () => {
+        document.getElementById('download-resume-pdf')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             this.downloadResumePDF();
+            return false; // extra belt & suspenders
         });
 
         // Error handling
@@ -1007,69 +1015,72 @@ class CoverLetterApp {
     }
 
     // Resume Generation Methods
-    async generateResume() {
-        const jobText = document.getElementById('job-text').value.trim();
-        
-        if (!jobText) {
-            this.showError('Please enter a job description.', false);
-            return;
-        }
+   async generateResume() {
+  const jobText = document.getElementById('job-text').value.trim();
+  if (!jobText) { this.showError('Please enter a job description.', false); return; }
+  if (!this.profile.name) { this.showError('Please complete your profile first.', false); return; }
 
-        if (!this.profile.name) {
-            this.showError('Please complete your profile first.', false);
-            return;
-        }
+  this.showLoading();
+  this.showStatus('Generating resume...', 'loading');
 
-        this.showLoading();
-        this.showStatus('Generating resume...', 'loading');
+  try {
+    const requestData = { profile: this.profile, jobText, type: 'resume' };
 
-        try {
-            const requestData = {
-                profile: this.profile,
-                jobText: jobText,
-                type: 'resume'
-            };
+    // DEBUG #1 — what you're sending
+    console.log('REQ.profile.education =', requestData.profile?.education);
 
-            this.lastApiCall = {
-                request: requestData,
-                timestamp: new Date().toISOString()
-            };
+    this.lastApiCall = { request: requestData, timestamp: new Date().toISOString() };
 
-            const response = await fetch('http://localhost:8787/generateResume', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            });
+    const response = await fetch('http://localhost:8787/generateResume', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestData)
+    });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP ${response.status}`);
-            }
-
-            const result = await response.json();
-            this.lastApiCall.response = result;
-
-            // Display the resume
-            this.displayResume(result.resumeContent);
-            this.switchToResumeView();
-            
-            // Save data
-            await this.saveData();
-
-            this.showStatus('Resume generated successfully!', 'success');
-            const downloadBtn = document.getElementById('download-resume-pdf');
-            if (downloadBtn) downloadBtn.disabled = false;
-
-        } catch (error) {
-            console.error('Resume generation error:', error);
-            this.showError(`Failed to generate resume: ${error.message}`);
-            this.showStatus('Resume generation failed', 'error');
-        } finally {
-            this.hideLoading();
-        }
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP ${response.status}`);
     }
+
+    const result = await response.json();
+
+    // DEBUG #2 — raw server result
+    console.log('RAW result from server =', result);
+
+    // DEBUG #3 — parse resumeContent + inspect education
+    let parsedResume;
+    try {
+      parsedResume = typeof result.resumeContent === 'string'
+        ? JSON.parse(result.resumeContent)
+        : result.resumeContent;
+
+      console.log('PARSED.resume.education =', parsedResume?.education,
+        'type =', Array.isArray(parsedResume?.education) ? 'array' : typeof parsedResume?.education);
+    } catch (e) {
+      console.error('Could not parse result.resumeContent as JSON:', e);
+    }
+
+    this.lastApiCall.response = result;
+
+    // Render once (no duplicates)
+    this.displayResume(result.resumeContent);
+    this.switchToResumeView();
+
+    await this.saveData();
+
+    this.showStatus('Resume generated successfully!', 'success');
+    const downloadBtn = document.getElementById('download-resume-pdf');
+    if (downloadBtn) downloadBtn.disabled = false;
+
+  } catch (error) {
+    console.error('Resume generation error:', error);
+    this.showError(`Failed to generate resume: ${error.message}`);
+    this.showStatus('Resume generation failed', 'error');
+  } finally {
+    this.hideLoading();
+  }
+}
+
 
     displayResume(resumeContent) {
         // Switch to generate tab to ensure the preview element is visible
@@ -1087,19 +1098,58 @@ class CoverLetterApp {
             // Format the resume with proper structure
             const formattedResume = this.formatResume(resumeContent);
             previewEl.innerHTML = formattedResume;
+
+            // cache + log exactly what the user sees
+            this.lastRenderedResumeHTML = previewEl.innerHTML;
+            console.log('[PREVIEW] render len:', this.lastRenderedResumeHTML.length);
+            console.log('[PREVIEW] head:', this.lastRenderedResumeHTML.slice(0, 180));
+
+            // notify that the preview is ready (optional; useful to re-enable the PDF button)
+            document.dispatchEvent(new CustomEvent('resume-rendered'));
+
+
+            // cache + log the exact preview HTML we just rendered
+            this.lastRenderedResumeHTML = previewEl.innerHTML;
+            console.log('[PREVIEW] render len:', this.lastRenderedResumeHTML.length);
+            document.dispatchEvent(new CustomEvent('resume-rendered'));
         }, 100);
+
+
+
     }
 
     formatResume(resumeContent) {
         // Parse the JSON resume content
         let resume;
+        let edu = {}; 
         try {
             resume = typeof resumeContent === 'string' ? JSON.parse(resumeContent) : resumeContent;
             console.log('Parsed resume data:', resume); // Debug log
+            // normalize education from API to a single object with consistent keys
+            const eduSrc = Array.isArray(resume.education) ? (resume.education[0] || {}) : (resume.education || {});
+            edu = {
+                school: eduSrc.school || eduSrc.university || '',
+                location: eduSrc.location || '',
+                dates: eduSrc.dates || eduSrc.graduation || eduSrc.end || '',
+                degree: eduSrc.degree || eduSrc.degreeType || '',
+                major: eduSrc.major || '',
+                minor: eduSrc.minor || '',
+                gpa: eduSrc.gpa || ''
+            };
         } catch (error) {
             console.error('Error parsing resume content:', error);
             return `<p style="color: red;">Error formatting resume content</p>`;
         }
+
+        console.log('EDU FINAL ->',
+            'school:', edu.school,
+            'degree:', edu.degree,
+            'major:', edu.major,
+            'dates:', edu.dates,
+            'gpa:', edu.gpa,
+            'PROFILE EDU:', this.profile?.education
+        );
+
 
         // Single-source rendering with exact measurements for pixel-perfect preview/PDF match
         const baseFont = "'Times New Roman', serif";
@@ -1159,37 +1209,49 @@ class CoverLetterApp {
                     </div>
                 </div>` : ''}
 
-                <!-- Education Section - ALWAYS SHOW -->
-                <div class="resume-section" style="margin-bottom: ${sectionSpacing};">
-                    <h2 style="
-                        margin: 0 0 0.4em 0;
-                        font-size: ${sectionHeaderSize};
-                        font-weight: bold;
-                        text-transform: uppercase;
-                        border-bottom: 1pt solid #000;
-                        padding-bottom: 2pt;
-                    ">EDUCATION & HONORS</h2>
-                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                        <span style="font-size: ${contactFontSize}; font-weight: bold;">
-                            ${resume.education?.school || this.profile.education?.university || 'Texas State University'}${resume.education?.location ? ` – ${resume.education.location}` : ' – San Marcos, TX'}
-                        </span>
-                        <span style="font-size: ${contactFontSize};">
-                            Graduation Date: ${resume.education?.dates || 'May 2026'}
-                        </span>
-                    </div>
-                    <div style="font-size: ${contactFontSize}; font-style: italic; margin: 0.1em 0;">
-                        ${resume.education?.degree || 'Bachelor of Science in Computer Science'}
-                    </div>
-                    <div style="font-size: ${contactFontSize}; font-weight: bold;">
-                        Major: ${resume.education?.major || this.profile.education?.major || 'Computer Science'}
-                    </div>
-                    ${resume.education?.minor || 'Mathematics' ? `<div style="font-size: ${contactFontSize}; font-weight: bold;">Minor: ${resume.education?.minor || 'Mathematics'}</div>` : ''}
-                    <div style="font-size: ${contactFontSize}; margin: 0.2em 0 0 0;">GPA: ${resume.education?.gpa || this.profile.education?.gpa || '3.6/4.0'}</div>
-                    <div style="font-size: ${bodyFontSize}; margin: 0.3em 0 0 0;">
-                        • 4x Dean's List, Texas State Achievement Scholarship Recipient<br>
-                        • Relevant Coursework: Data Structures and Algorithms, Assembly Language, Computer Architecture, Object Oriented Programming [Java], Computer Graphics, Cyber Security, Computing Systems Fundamentals, Software Engineering
-                    </div>
-                </div>
+               
+
+                <!-- Education Section -->
+                        <div class="resume-section" style="margin-bottom: ${sectionSpacing};">
+                        <h2 style="...">EDUCATION & HONORS</h2>
+
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <span style="font-size: ${contactFontSize}; font-weight: bold;">
+                            ${(edu.school || this.profile.education?.university || 'Texas State University')}
+                            ${(edu.location || this.profile.location) ? ` – ${(edu.location || this.profile.location)}` : ' – San Marcos, TX'}
+                            </span>
+                            <span style="font-size: ${contactFontSize};">
+                            Graduation Date: ${(edu.dates || this.profile.education?.end || 'May 2026')}
+                            </span>
+                        </div>
+
+                        <div style="font-size: ${contactFontSize}; font-style: italic; margin: 0.1em 0;">
+                            ${(edu.degree || this.profile.education?.degreeType || 'Bachelor of Science in Computer Science')}
+                        </div>
+
+                        <div style="font-size: ${contactFontSize}; font-weight: bold;">
+                            Major: ${(edu.major || this.profile.education?.major || 'Computer Science')}
+                        </div>
+
+                        ${((edu.minor || this.profile.education?.minor) ? `
+                            <div style="font-size: ${contactFontSize}; font-weight: bold;">
+                            Minor: ${(edu.minor || this.profile.education?.minor)}
+                            </div>` : '')}
+
+                        <div style="font-size: ${contactFontSize}; margin: 0.2em 0 0 0;">
+                            GPA: ${(edu.gpa || this.profile.education?.gpa || '3.6/4.0')}
+                        </div>
+
+                        <!-- keep your honors/coursework block as-is -->
+                        <div style="font-size: ${bodyFontSize}; margin: 0.3em 0 0 0;">
+                            • 4x Dean's List, Texas State Achievement Scholarship Recipient<br>
+                            • Relevant Coursework: Data Structures and Algorithms, Assembly Language, Computer Architecture,
+                            Object-Oriented Programming (Java), Computer Graphics, Cyber Security, Computing Systems Fundamentals,
+                            Software Engineering
+                        </div>
+                        </div>
+
+
 
                 <!-- Experience Section -->
                 ${resume.experience && resume.experience.length > 0 ? `
@@ -1236,7 +1298,7 @@ class CoverLetterApp {
                         font-weight: bold;
                         text-transform: uppercase;
                         border-bottom: 1pt solid #000;
-                        padding-bottom: 2pt;
+                        padding-bottom: 2pt;6
                     ">PROJECTS</h2>
                     ${resume.projects.map(proj => `
                         <div class="project-entry" style="margin-bottom: ${entrySpacing};">
@@ -1255,20 +1317,29 @@ class CoverLetterApp {
                     `).join('')}
                 </div>` : ''}
 
-                <!-- Programs/Certifications Section - ALWAYS SHOW -->
-                <div class="resume-section">
-                    <h2 style="
-                        margin: 0 0 0.4em 0;
-                        font-size: ${sectionHeaderSize};
-                        font-weight: bold;
-                        text-transform: uppercase;
-                        border-bottom: 1pt solid #000;
-                        padding-bottom: 2pt;
-                    ">PROGRAMS / CERTIFICATIONS</h2>
-                    <div style="font-size: ${bodyFontSize}; margin-bottom: 0.3em; line-height: 1.3;">
-                        <strong>Paycom - Technology Summer Engagement Program - Austin, Texas</strong> - Jun 2025<br>
-                        • Selected participant in Paycom's multi day tech immersion. Completed workshops on secure documentation and compliance strategies during Paycom Tech Engagement Program.<br>
-                        • Worked with a small student team to design and pitch a feature concept to Paycom engineers, gaining direct feedback on Agile teamwork, presentation skills, and real-world software workflows.
+                                    ${
+                    (
+                        (resume.programs && resume.programs.length > 0) ||
+                        (resume.certifications && resume.certifications.length > 0)
+                    ) ? `
+                        <!-- Programs/Certifications Section -->
+                        <div class="resume-section">
+                        <h2 style="
+                            margin: 0 0 0.4em 0;
+                            font-size: ${sectionHeaderSize};
+                            font-weight: bold;
+                            text-transform: uppercase;
+                            border-bottom: 1pt solid #000;
+                            padding-bottom: 2pt;
+                        ">PROGRAMS / CERTIFICATIONS</h2>
+                        <div style="font-size: ${bodyFontSize}; margin-bottom: 0.3em; line-height: 1.3;">
+                            <strong>Paycom – Technology Summer Engagement Program – Austin, Texas</strong> – Jun 2025<br>
+                            • Selected participant in Paycom’s multi-day tech immersion program. Completed workshops on secure documentation and compliance strategies.<br>
+                            • Collaborated with a student team to design and pitch a feature concept to Paycom engineers, gaining feedback on Agile teamwork and presentation skills.
+                        </div>
+                        </div>
+                    ` : ''
+                    }
                     </div>
                 </div>
             </div>
@@ -1365,76 +1436,120 @@ class CoverLetterApp {
         if (previewTitle) previewTitle.textContent = 'Cover Letter Preview';
     }
 
-    async downloadResumePDF() {
-        try {
-            // Show loading
-            this.showStatus('Generating PDF...', 'loading');
-            
-            // Get the resume content
-            const resumeElement = document.querySelector('.resume-content');
-            if (!resumeElement) {
-                throw new Error('No resume to download');
-            }
+async downloadResumePDF() {
+  try {
+    const container = document.querySelector('.resume-content');
+    if (!container) throw new Error('No resume preview found.');
 
-            // Create PDF using jsPDF with exact measurements
-            const { jsPDF } = window.jspdf;
-            if (!jsPDF) {
-                throw new Error('PDF library not loaded');
-            }
+    // Capture head styles but skip extension-only URLs (Puppeteer cannot fetch chrome-extension://)
+    const headHTML = Array.from(
+      document.head.querySelectorAll('style,link[rel="stylesheet"]')
+    ).filter(el => !(el.tagName === 'LINK' && /^chrome-extension:\/\//i.test(el.href || '')))
+     .map(el => el.outerHTML)
+     .join('\n');
 
-            const doc = new jsPDF({
-                orientation: 'portrait',
-                unit: 'pt',
-                format: 'letter'
-            });
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8"/>
+          ${headHTML}
+          <style> body { margin: 0; background: white; } </style>
+        </head>
+        <body>
+          ${container.outerHTML}
+        </body>
+      </html>`;
 
-            // Convert HTML to PDF with exact preview matching
-            await this.renderHTMLToPDF(doc, resumeElement);
+    const resp = await fetch('http://localhost:8787/pdf/fromHtml', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html }),
+    });
 
-            // Generate filename with proper format
-            const company = this.extractCompanyFromJob();
-            const role = this.extractRoleFromJob();
-            const nameParts = this.profile.name.split(' ');
-            const firstName = nameParts[0];
-            const lastName = nameParts.slice(1).join(' ');
-            const filename = `${firstName} ${lastName} Resume${company ? ' ' + company : ''}${role ? ' ' + role : ''}.pdf`;
-
-            // Convert to blob and download - identical to cover letter
-            const pdfBlob = doc.output('blob');
-            const url = URL.createObjectURL(pdfBlob);
-            
-            // Use Chrome downloads API for instant download
-            if (chrome && chrome.downloads) {
-                chrome.downloads.download({
-                    url: url,
-                    filename: filename,
-                    saveAs: false
-                }, (downloadId) => {
-                    if (chrome.runtime.lastError) {
-                        console.error('Download failed:', chrome.runtime.lastError);
-                        this.fallbackDownload(url, filename);
-                    } else {
-                        this.showStatus('Resume PDF downloaded successfully!', 'success');
-                        setTimeout(() => {
-                            const statusEl = document.getElementById('generation-status');
-                            if (statusEl) statusEl.textContent = '';
-                        }, 3000);
-                    }
-                    
-                    setTimeout(() => URL.revokeObjectURL(url), 1000);
-                });
-            } else {
-                this.fallbackDownload(url, filename);
-            }
-
-        } catch (error) {
-            console.error('Resume PDF generation error:', error);
-            this.showError(`Failed to generate resume PDF: ${error.message}`);
-            this.showStatus('PDF generation failed', 'error');
-        }
+    // Status + content-type guard
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      throw new Error(`Server responded ${resp.status}: ${errText.slice(0, 150)}`);
+    }
+    const contentType = (resp.headers.get('content-type') || '').toLowerCase();
+    if (!contentType.includes('application/pdf')) {
+      const errText = await resp.text().catch(() => '');
+      throw new Error(`Expected PDF, got ${contentType || 'unknown'}: ${errText.slice(0, 150)}`);
     }
 
+    // Read once → ArrayBuffer
+    const buf = await resp.arrayBuffer();
+
+    // Rich diagnostics to pinpoint non-PDF bodies
+    const headAscii = String.fromCharCode(...new Uint8Array(buf.slice(0, 8)));
+    const headHex = [...new Uint8Array(buf.slice(0, 16))]
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join(' ');
+    const sniffText = new TextDecoder('utf-8', { fatal: false }).decode(buf.slice(0, 200));
+    console.log('HEAD(ascii)=', JSON.stringify(headAscii));
+    console.log('HEAD(hex)=', headHex);
+    console.log('SNIFF(text)=', sniffText);
+
+    // Validate PDF magic
+    if (!headAscii.startsWith('%PDF-')) {
+      // Save exactly what we received so we can inspect it
+      const dbgUrl = URL.createObjectURL(new Blob([buf], { type: 'application/octet-stream' }));
+      const dbgA = document.createElement('a');
+      dbgA.href = dbgUrl;
+      dbgA.download = 'resume_debug.bin';
+      document.body.appendChild(dbgA);
+      dbgA.click();
+      document.body.removeChild(dbgA);
+      setTimeout(() => URL.revokeObjectURL(dbgUrl), 2000);
+
+      throw new Error('Response body is not a valid PDF (missing %PDF- header)');
+    }
+
+    // One blob only, from validated bytes
+    const blob = new Blob([buf], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+
+    // Prefer Chrome downloads API (reliable in extensions); delay revoke to avoid truncation
+    if (chrome?.downloads?.download) {
+      chrome.downloads.download(
+        { url, filename: 'Resume.pdf', saveAs: false },
+        () => setTimeout(() => URL.revokeObjectURL(url), 2000)
+      );
+    } else {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Resume.pdf';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    this.showStatus('Resume PDF downloaded successfully!', 'success');
+  } catch (err) {
+    console.error('Resume PDF generation error:', err);
+    this.showError('Failed to download resume PDF: ' + err.message);
+  }
+}
+
+
+
     async renderHTMLToPDF(doc, element) {
+        // alias element as node so both names work safely
+        const node = element;
+
+        if (!node) {
+            throw new Error('renderHTMLToPDF: no element/node passed');
+        }
+
+        
+        console.log('[renderHTMLToPDF] got node?', !!node, 'len=', node?.innerHTML?.length);
+        console.log('[renderHTMLToPDF] head=', node?.innerHTML?.slice(0, 180));
+        // ... existing code ...
+
+
         // Professional resume PDF rendering with exact preview matching
         const leftMargin = 36; // 0.5 inch in points
         const rightMargin = 36;
@@ -1621,3 +1736,5 @@ if (document.readyState === 'loading') {
     // DOM is already loaded
     initApp();
 }
+
+//note for current version
