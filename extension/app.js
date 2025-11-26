@@ -12,7 +12,9 @@ class CoverLetterApp {
                 major: '',
                 start: '',
                 end: '',
-                gpa: ''
+                gpa: '',
+                honors: '',
+                coursework: ''
             },
             skills: [],
             experiences: [],
@@ -46,11 +48,21 @@ class CoverLetterApp {
         const result = await chrome.storage.local.get(['profile']);
         if (result.profile) {
             // shallow merge first
-            this.profile = { ...this.profile, ...result.profile };
+            this.profile = { 
+                ...this.profile,
+                ...result.profile
+            };
             // deep-merge education to keep all child fields intact
             this.profile.education = {
-            ...{ university: '', degreeType: '', major: '', start: '', end: '', gpa: '' },
-            ...(result.profile.education || {})
+                 university: '', 
+                 degreeType: '', 
+                 major: '', 
+                 start: '', 
+                 end: '', 
+                 gpa: '',
+                 honors: '',
+                 coursework: '',
+                 ...(result.profile.education || {})
             };
             }
         }  catch (e) { console.error('Error loading data:', e); }
@@ -77,7 +89,19 @@ class CoverLetterApp {
         };
 
         // Autosave on profile field changes
-        const profileFields = ['profile-name', 'profile-contact', 'profile-location', 'profile-university', 'profile-degree-type', 'profile-major', 'profile-education-start', 'profile-education-end', 'profile-education-gpa'];
+        const profileFields = [
+            'profile-name',
+            'profile-contact',
+            'profile-location', 
+            'profile-university',
+            'profile-degree-type',
+            'profile-major',
+            'profile-education-start',
+            'profile-education-end',
+            'profile-education-gpa',
+            'profile-education-honors',
+            'profile-education-coursework'
+        ];
         profileFields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
             if (field) {
@@ -210,6 +234,14 @@ class CoverLetterApp {
         document.getElementById('profile-education-gpa')?.addEventListener('input', (e) => {
             this.profile.education.gpa = e.target.value;
         });
+
+        document.getElementById('profile-education-honors')?.addEventListener('input', (e) => {
+            this.profile.education.honors = e.target.value;
+        });
+
+        document.getElementById('profile-education-coursework')?.addEventListener('input', (e) => {
+            this.profile.education.coursework = e.target.value;
+        });
     }
 
     // UI Management
@@ -283,6 +315,8 @@ class CoverLetterApp {
         setFieldValue('profile-education-start', this.profile.education?.start);
         setFieldValue('profile-education-end', this.profile.education?.end);
         setFieldValue('profile-education-gpa', this.profile.education?.gpa);
+        setFieldValue('profile-education-honors', this.profile.education?.honors);
+        setFieldValue('profile-education-coursework', this.profile.education?.coursework);
         
         this.renderSkills();
         this.renderExperiences();
@@ -1134,7 +1168,9 @@ class CoverLetterApp {
                 degree: eduSrc.degree || eduSrc.degreeType || '',
                 major: eduSrc.major || '',
                 minor: eduSrc.minor || '',
-                gpa: eduSrc.gpa || ''
+                gpa: eduSrc.gpa || '',
+                honors:  eduSrc.honors || '',
+                coursework: eduSrc.coursework || ''
             };
         } catch (error) {
             console.error('Error parsing resume content:', error);
@@ -1211,45 +1247,83 @@ class CoverLetterApp {
 
                
 
-                <!-- Education Section -->
-                        <div class="resume-section" style="margin-bottom: ${sectionSpacing};">
-                        <h2 style="...">EDUCATION & HONORS</h2>
+                                <!-- Education Section -->
+                <div class="resume-section" style="margin-bottom: ${sectionSpacing};">
+                <h2 style="
+                    margin: 0 0 0.4em 0;
+                    font-size: ${sectionHeaderSize};
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    border-bottom: 1pt solid #000;
+                    padding-bottom: 2pt;
+                ">EDUCATION & HONORS</h2>
 
-                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                            <span style="font-size: ${contactFontSize}; font-weight: bold;">
-                            ${(edu.school || this.profile.education?.university || 'Texas State University')}
-                            ${(edu.location || this.profile.location) ? ` – ${(edu.location || this.profile.location)}` : ' – San Marcos, TX'}
-                            </span>
-                            <span style="font-size: ${contactFontSize};">
-                            Graduation Date: ${(edu.dates || this.profile.education?.end || 'May 2026')}
-                            </span>
-                        </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <span style="font-size: ${contactFontSize}; font-weight: bold;">
+                    ${(edu.school || this.profile.education?.university || '')}
+                    ${(edu.location || this.profile.location)
+                        ? ` – ${(edu.location || this.profile.location)}`
+                        : ''}
+                    </span>
+                    <span style="font-size: ${contactFontSize};">
+                    ${
+                        (edu.dates || this.profile.education?.end)
+                        ? `Graduation Date: ${(edu.dates || this.profile.education?.end)}`
+                        : ''
+                    }
+                    </span>
+                </div>
 
-                        <div style="font-size: ${contactFontSize}; font-style: italic; margin: 0.1em 0;">
-                            ${(edu.degree || this.profile.education?.degreeType || 'Bachelor of Science in Computer Science')}
-                        </div>
+                ${
+                    (edu.degree || this.profile.education?.degreeType)
+                    ? `<div style="font-size: ${contactFontSize}; font-style: italic; margin: 0.1em 0;">
+                            ${(edu.degree || this.profile.education?.degreeType)}
+                        </div>`
+                    : ''
+                }
 
-                        <div style="font-size: ${contactFontSize}; font-weight: bold;">
-                            Major: ${(edu.major || this.profile.education?.major || 'Computer Science')}
-                        </div>
+                ${
+                    (edu.major || this.profile.education?.major)
+                    ? `<div style="font-size: ${contactFontSize}; font-weight: bold;">
+                            Major: ${(edu.major || this.profile.education?.major)}
+                        </div>`
+                    : ''
+                }
 
-                        ${((edu.minor || this.profile.education?.minor) ? `
-                            <div style="font-size: ${contactFontSize}; font-weight: bold;">
+                ${
+                    (edu.minor || this.profile.education?.minor)
+                    ? `<div style="font-size: ${contactFontSize}; font-weight: bold;">
                             Minor: ${(edu.minor || this.profile.education?.minor)}
-                            </div>` : '')}
+                        </div>`
+                    : ''
+                }
 
-                        <div style="font-size: ${contactFontSize}; margin: 0.2em 0 0 0;">
-                            GPA: ${(edu.gpa || this.profile.education?.gpa || '3.6/4.0')}
-                        </div>
+                ${
+                    (edu.gpa || this.profile.education?.gpa)
+                    ? `<div style="font-size: ${contactFontSize}; margin: 0.2em 0 0 0;">
+                            GPA: ${(edu.gpa || this.profile.education?.gpa)}
+                        </div>`
+                    : ''
+                }
 
-                        <!-- keep your honors/coursework block as-is -->
-                        <div style="font-size: ${bodyFontSize}; margin: 0.3em 0 0 0;">
-                            • 4x Dean's List, Texas State Achievement Scholarship Recipient<br>
-                            • Relevant Coursework: Data Structures and Algorithms, Assembly Language, Computer Architecture,
-                            Object-Oriented Programming (Java), Computer Graphics, Cyber Security, Computing Systems Fundamentals,
-                            Software Engineering
-                        </div>
-                        </div>
+                ${
+                    (edu.honors || this.profile.education?.honors || edu.coursework || this.profile.education?.coursework)
+                    ? `<div style="font-size: ${bodyFontSize}; margin: 0.3em 0 0 0;">
+                            ${
+                            (edu.honors || this.profile.education?.honors)
+                                ? `• ${(edu.honors || this.profile.education?.honors)}<br>`
+                                : ''
+                            }
+                            ${
+                            (edu.coursework || this.profile.education?.coursework)
+                                ? `• Relevant Coursework: ${(edu.coursework || this.profile.education?.coursework)}`
+                                : ''
+                            }
+                        </div>`
+                    : ''
+                }
+                </div>
+
 
 
 
