@@ -295,6 +295,14 @@ class CoverLetterApp {
         if (statusEl) {
             statusEl.textContent = message;
             statusEl.className = `status-message status-${type}`;
+            statusEl.classList.remove('hidden');
+            
+            // Auto-hide success messages after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusEl.classList.add('hidden');
+                }, 3000);
+            }
         }
     }
 
@@ -376,13 +384,13 @@ class CoverLetterApp {
 
     createExperienceElement(exp, index) {
         const div = document.createElement('div');
-        div.className = 'experience-card';
+        div.className = 'experience-card glass-elevated';
         div.innerHTML = `
             <div class="card-header">
                 <div class="card-title">
                     <input type="text" placeholder="Job Title" value="${exp.title || ''}" data-field="title" data-index="${index}">
                     <input type="text" placeholder="Company" value="${exp.company || ''}" data-field="company" data-index="${index}">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+                    <div class="input-row input-row-3">
                         <input type="text" placeholder="Start Date" value="${exp.start || ''}" data-field="start" data-index="${index}">
                         <input type="text" placeholder="End Date" value="${exp.end || ''}" data-field="end" data-index="${index}">
                         <input type="text" placeholder="Location" value="${exp.location || ''}" data-field="location" data-index="${index}">
@@ -390,16 +398,19 @@ class CoverLetterApp {
                     <textarea placeholder="Role description (what you did in this role)..." style="margin-top: 0.5rem; min-height: 60px;" data-field="description" data-index="${index}">${(exp.description || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
                 </div>
                 <div class="card-actions">
-                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                    <label class="must-include-label">
                         <input type="checkbox" class="must-include-exp" data-index="${index}" ${exp.mustInclude ? 'checked' : ''}>
-                        Must Include on Resume
+                        Must Include
                     </label>
-                    <button class="btn btn-secondary btn-sm add-bullet" data-index="${index}">Add Achievement</button>
-                    <button class="btn btn-danger btn-sm remove-experience" data-index="${index}">Remove</button>
+                    <button class="btn btn-secondary btn-sm btn-ripple add-bullet" data-index="${index}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add Achievement
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-ripple remove-experience" data-index="${index}">Remove</button>
                 </div>
             </div>
             <div class="bullet-list" data-index="${index}">
-                <label style="font-weight: 500; margin-bottom: 0.5rem; display: block;">Key Achievements:</label>
+                <label>Key Achievements</label>
                 ${(exp.bullets || []).map((bullet, bulletIndex) => `
                     <div class="bullet-item">
                         <input type="text" placeholder="Specific achievement with metrics if possible..." value="${bullet}" data-bullet-index="${bulletIndex}">
@@ -504,7 +515,7 @@ class CoverLetterApp {
 
     createProjectElement(project, index) {
         const div = document.createElement('div');
-        div.className = 'project-card';
+        div.className = 'project-card glass-elevated';
         div.innerHTML = `
             <div class="card-header">
                 <div class="card-title">
@@ -512,16 +523,19 @@ class CoverLetterApp {
                     <textarea placeholder="Project description (what it does, technologies used)..." style="margin-top: 0.5rem; min-height: 60px;" data-field="description" data-index="${index}">${(project.description || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
                 </div>
                 <div class="card-actions">
-                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                    <label class="must-include-label">
                         <input type="checkbox" class="must-include-proj" data-index="${index}" ${project.mustInclude ? 'checked' : ''}>
-                        Must Include on Resume
+                        Must Include
                     </label>
-                    <button class="btn btn-secondary btn-sm add-bullet" data-index="${index}">Add Detail</button>
-                    <button class="btn btn-danger btn-sm remove-project" data-index="${index}">Remove</button>
+                    <button class="btn btn-secondary btn-sm btn-ripple add-bullet" data-index="${index}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        Add Detail
+                    </button>
+                    <button class="btn btn-danger btn-sm btn-ripple remove-project" data-index="${index}">Remove</button>
                 </div>
             </div>
             <div class="bullet-list" data-index="${index}">
-                <label style="font-weight: 500; margin-bottom: 0.5rem; display: block;">Key Details/Achievements:</label>
+                <label>Key Details / Achievements</label>
                 ${(project.bullets || []).map((bullet, bulletIndex) => `
                     <div class="bullet-item">
                         <input type="text" placeholder="Technical detail, impact, or achievement..." value="${bullet}" data-bullet-index="${bulletIndex}">
@@ -621,14 +635,14 @@ class CoverLetterApp {
 
     createExtraElement(extra, index) {
         const div = document.createElement('div');
-        div.className = 'experience-card'; // Reuse same styling
+        div.className = 'experience-card glass-elevated';
         div.innerHTML = `
             <div class="card-header">
                 <div class="card-title">
                     <input type="text" placeholder="Title/Type (e.g., Research Assistant, Certification)" value="${extra.title || ''}" data-field="title" data-index="${index}">
                     <input type="text" placeholder="Organization/Institution" value="${extra.organization || ''}" data-field="organization" data-index="${index}">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
-                        <select data-field="type" data-index="${index}" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem;">
+                    <div class="input-row input-row-3">
+                        <select data-field="type" data-index="${index}">
                             <option value="research" ${extra.type === 'research' ? 'selected' : ''}>Research</option>
                             <option value="program" ${extra.type === 'program' ? 'selected' : ''}>Program</option>
                             <option value="certification" ${extra.type === 'certification' ? 'selected' : ''}>Certification</option>
@@ -640,7 +654,7 @@ class CoverLetterApp {
                     <textarea placeholder="Description of the experience, achievement, or certification..." style="margin-top: 0.5rem; min-height: 80px;" data-field="description" data-index="${index}">${(extra.description || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
                 </div>
                 <div class="card-actions">
-                    <button class="btn btn-danger btn-sm remove-extra" data-index="${index}">Remove</button>
+                    <button class="btn btn-danger btn-sm btn-ripple remove-extra" data-index="${index}">Remove</button>
                 </div>
             </div>
         `;

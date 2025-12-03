@@ -1,120 +1,306 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cover Letter Generator</title>
+    <title>Resume & Cover Letter Generator</title>
+    
+    <!-- Preload Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Background Layers -->
+    <div class="app-background"></div>
+    <div class="noise-overlay"></div>
+
     <div class="app-container">
-        <header class="app-header">
-            <h1>Cover Letter Generator</h1>
-            <nav class="tab-nav">
-                <button class="tab-btn active" data-tab="profile">Profile</button>
-                <button class="tab-btn" data-tab="generate">Generate</button>
-            </nav>
+        <!-- ═══════════════════════════════════════════════════════════════════
+             HEADER - Navigation & Theme Toggle
+             ═══════════════════════════════════════════════════════════════════ -->
+        <header class="app-header glass-elevated">
+            <div class="header-brand">
+                <div class="header-logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <h1>Resume Studio</h1>
+            </div>
+
+            <div class="header-controls">
+                <nav class="tab-nav">
+                    <button class="tab-btn active" data-tab="profile">
+                        <span>Profile</span>
+                    </button>
+                    <button class="tab-btn" data-tab="generate">
+                        <span>Generate</span>
+                    </button>
+                </nav>
+
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                    <svg class="theme-icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="theme-icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
         </header>
 
+        <!-- ═══════════════════════════════════════════════════════════════════
+             MAIN CONTENT AREA
+             ═══════════════════════════════════════════════════════════════════ -->
         <main class="app-main">
-            <!-- Profile Tab -->
+            
+            <!-- ═══════════════════════════════════════════════════════════════
+                 PROFILE TAB
+                 ═══════════════════════════════════════════════════════════════ -->
             <div id="profile-tab" class="tab-content active">
-                <div class="section">
+                
+                <!-- Personal Information Section -->
+                <section class="section glass glass-shimmer">
                     <h2>Personal Information</h2>
+                    
                     <div class="form-group">
                         <label for="profile-name">Full Name</label>
-                        <input type="text" id="profile-name" placeholder="John Doe">
+                        <input type="text" id="profile-name" placeholder="Enter your full name">
                     </div>
+                    
                     <div class="form-group">
                         <label for="profile-contact">Contact Information</label>
-                        <textarea id="profile-contact" rows="4" placeholder="Email: john@example.com&#10;Phone: (555) 123-4567&#10;LinkedIn: linkedin.com/in/johndoe&#10;GitHub: github.com/johndoe&#10;Portfolio: johndoe.dev"></textarea>
+                        <textarea id="profile-contact" rows="4" placeholder="Email: you@example.com&#10;Phone: (555) 123-4567&#10;LinkedIn: linkedin.com/in/yourprofile&#10;GitHub: github.com/yourusername&#10;Portfolio: yoursite.dev"></textarea>
                     </div>
+                    
                     <div class="form-group">
                         <label for="profile-location">Location</label>
-                        <input type="text" id="profile-location" placeholder="City, State (e.g., Austin, TX)">
+                        <input type="text" id="profile-location" placeholder="City, State (e.g., San Francisco, CA)">
                     </div>
+                    
                     <div class="form-group">
                         <label>Education</label>
                         <input type="text" id="profile-university" placeholder="University Name (e.g., Stanford University)">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+                        
+                        <div class="input-row input-row-2">
                             <input type="text" id="profile-degree-type" placeholder="Degree Type (e.g., Bachelor of Science)">
                             <input type="text" id="profile-major" placeholder="Major (e.g., Computer Science)">
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
-                            <input type="text" id="profile-education-start" placeholder="Start Year (e.g., 2016)">
-                            <input type="text" id="profile-education-end" placeholder="End Year (e.g., 2020)">
+                        
+                        <div class="input-row input-row-3">
+                            <input type="text" id="profile-education-start" placeholder="Start Year">
+                            <input type="text" id="profile-education-end" placeholder="End Year">
                             <input type="text" id="profile-education-gpa" placeholder="GPA (e.g., 3.8/4.0)">
-                            <input type="text" id="profile-education-honors" placeholder="honors and shit">
-                            <input type="text" id="profile-education-coursework" placeholder="coursework and shit">
+                        </div>
+                        
+                        <div class="input-row input-row-2">
+                            <input type="text" id="profile-education-honors" placeholder="Honors (e.g., Dean's List, Magna Cum Laude)">
+                            <input type="text" id="profile-education-coursework" placeholder="Relevant Coursework">
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="section">
-                    <h2>Skills</h2>
+                <!-- Skills Section -->
+                <section class="section glass glass-shimmer">
+                    <h2>Skills & Expertise</h2>
+                    
                     <div class="form-group">
-                        <label for="skills-input">Add Skills (press Enter to add)</label>
-                        <input type="text" id="skills-input" placeholder="JavaScript, Python, React...">
+                        <label for="skills-input">Add Skills</label>
+                        <input type="text" id="skills-input" placeholder="Type a skill and press Enter (e.g., JavaScript, Python, React)">
                         <div id="skills-list" class="skills-container"></div>
                     </div>
-                </div>
+                </section>
 
-                <div class="section">
-                    <h2>Experience</h2>
-                    <button id="add-experience" class="btn btn-secondary">Add Experience</button>
+                <!-- Experience Section -->
+                <section class="section glass glass-shimmer">
+                    <h2>Work Experience</h2>
+                    <p class="section-description">Add your professional experience. Mark items as "Must Include" to prioritize them on your resume.</p>
+                    
+                    <button id="add-experience" class="btn btn-secondary btn-ripple">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Experience
+                    </button>
                     <div id="experiences-container"></div>
-                </div>
+                </section>
 
-                <div class="section">
+                <!-- Projects Section -->
+                <section class="section glass glass-shimmer">
                     <h2>Projects</h2>
-                    <button id="add-project" class="btn btn-secondary">Add Project</button>
+                    <p class="section-description">Showcase your best projects with descriptions and key achievements.</p>
+                    
+                    <button id="add-project" class="btn btn-secondary btn-ripple">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Project
+                    </button>
                     <div id="projects-container"></div>
-                </div>
+                </section>
 
-                <div class="section">
+                <!-- Additional Experience Section -->
+                <section class="section glass glass-shimmer">
                     <h2>Additional Experience</h2>
-                    <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem;">Research experience, achievements, certifications, publications, etc.</p>
-                    <button id="add-extra" class="btn btn-secondary">Add Item</button>
+                    <p class="section-description">Research, certifications, publications, awards, and other achievements.</p>
+                    
+                    <button id="add-extra" class="btn btn-secondary btn-ripple">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add Item
+                    </button>
                     <div id="extras-container"></div>
-                </div>
+                </section>
 
-                <div class="section actions">
-                    <button id="save-profile" class="btn btn-primary">Save Profile</button>
-                    <button id="import-profile" class="btn btn-secondary">Import JSON</button>
-                    <button id="export-profile" class="btn btn-secondary">Export JSON</button>
-                    <input type="file" id="import-file" accept=".json" style="display: none;">
-                </div>
+                <!-- Actions Section -->
+                <section class="section glass">
+                    <div class="actions">
+                        <button id="save-profile" class="btn btn-primary btn-ripple">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            Save Profile
+                        </button>
+                        
+                        <button id="import-profile" class="btn btn-secondary btn-ripple">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            Import JSON
+                        </button>
+                        
+                        <button id="export-profile" class="btn btn-secondary btn-ripple">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Export JSON
+                        </button>
+                        
+                        <input type="file" id="import-file" accept=".json" style="display: none;">
+                    </div>
+                </section>
             </div>
 
-            <!-- Generate Tab -->
+            <!-- ═══════════════════════════════════════════════════════════════
+                 GENERATE TAB
+                 ═══════════════════════════════════════════════════════════════ -->
             <div id="generate-tab" class="tab-content">
                 <div class="generate-layout">
+                    
+                    <!-- Job Input Section -->
                     <div class="job-input-section">
-                        <h2>Job Description</h2>
-                        <textarea id="job-text" rows="15" placeholder="Paste the job description here..."></textarea>
-                        <div class="generation-buttons">
-                            <button id="generate-btn" class="btn btn-primary">Generate Cover Letter</button>
-                            <button id="generate-resume-btn" class="btn btn-primary">Generate Resume</button>
-                        </div>
-                        <div id="generation-status" class="status-message"></div>
+                        <section class="section glass glass-shimmer" style="flex: 1; display: flex; flex-direction: column;">
+                            <h2>Job Description</h2>
+                            <p class="section-description">Paste the job posting to generate a tailored resume or cover letter.</p>
+                            
+                            <textarea id="job-text" placeholder="Paste the complete job description here...&#10;&#10;Include the job title, company name, requirements, responsibilities, and any other relevant details for best results."></textarea>
+                            
+                            <div class="generation-buttons">
+                                <button id="generate-btn" class="btn btn-primary btn-ripple">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                    Generate Cover Letter
+                                </button>
+                                
+                                <button id="generate-resume-btn" class="btn btn-primary btn-ripple">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                                    </svg>
+                                    Generate Resume
+                                </button>
+                            </div>
+                            
+                            <div id="generation-status" class="status-message hidden"></div>
+                        </section>
                     </div>
                     
-                    <div class="preview-section">
+                    <!-- Preview Section -->
+                    <div class="preview-section glass-elevated">
                         <div class="preview-header">
-                            <h2 id="preview-title">Preview</h2>
+                            <h2 id="preview-title">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                Preview
+                            </h2>
+                            
                             <div class="preview-controls">
-                                <button id="download-pdf" class="btn btn-secondary" disabled>Download Cover Letter PDF</button>
-                                <button id="download-resume-pdf" class="btn btn-secondary hidden" disabled>Download Resume PDF</button>
+                                <button id="download-pdf" class="btn btn-secondary btn-sm btn-ripple" disabled>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Cover Letter PDF
+                                </button>
+                                
+                                <button id="download-resume-pdf" class="btn btn-secondary btn-sm btn-ripple hidden" disabled>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Resume PDF
+                                </button>
                             </div>
                         </div>
+                        
                         <div id="cover-letter-preview" class="letter-preview">
                             <div class="letter-content">
-                                <p class="placeholder-text">Your generated cover letter will appear here...</p>
+                                <p class="placeholder-text">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3; margin-bottom: 1rem;">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                    <br>
+                                    Your generated cover letter will appear here...
+                                </p>
                             </div>
                         </div>
+                        
                         <div id="resume-preview" class="resume-preview hidden">
                             <div class="resume-content">
-                                <p class="placeholder-text">Your generated resume will appear here...</p>
+                                <p class="placeholder-text">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.3; margin-bottom: 1rem;">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                                    </svg>
+                                    <br>
+                                    Your generated resume will appear here...
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -123,31 +309,60 @@
 
         </main>
 
-        <!-- Loading Overlay -->
+        <!-- ═══════════════════════════════════════════════════════════════════
+             LOADING OVERLAY
+             ═══════════════════════════════════════════════════════════════════ -->
         <div id="loading-overlay" class="loading-overlay hidden">
-            <div class="loading-spinner"></div>
-            <p>Generating your cover letter...</p>
+            <div class="loading-content glass-floating">
+                <div class="loading-spinner"></div>
+                <p>Generating your document...</p>
+            </div>
         </div>
 
-        <!-- Error Modal -->
+        <!-- ═══════════════════════════════════════════════════════════════════
+             ERROR MODAL
+             ═══════════════════════════════════════════════════════════════════ -->
         <div id="error-modal" class="modal hidden">
-            <div class="modal-content">
+            <div class="modal-content glass-floating">
                 <div class="modal-header">
-                    <h3>Error</h3>
+                    <h3>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--status-error);">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        Error
+                    </h3>
                     <button class="modal-close">&times;</button>
                 </div>
                 <div class="modal-body">
                     <p id="error-message">An error occurred.</p>
                     <div class="modal-actions">
-                        <button id="retry-btn" class="btn btn-primary">Retry</button>
-                        <button id="save-logs-btn" class="btn btn-secondary">Save Logs</button>
+                        <button id="retry-btn" class="btn btn-primary btn-ripple">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                            Retry
+                        </button>
+                        <button id="save-logs-btn" class="btn btn-secondary btn-ripple">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Save Logs
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 
+    <!-- Scripts -->
     <script src="jspdf.min.js"></script>
+    <script src="theme.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

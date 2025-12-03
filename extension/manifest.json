@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Cover Letter Generator",
-  "version": "1.0.0",
-  "description": "Generate personalized cover letters using your profile and job descriptions",
+  "name": "Resume Studio",
+  "version": "2.0.0",
+  "description": "AI-powered resume and cover letter generator with iOS 26 Liquid Glass design",
   
   "permissions": [
     "storage",
